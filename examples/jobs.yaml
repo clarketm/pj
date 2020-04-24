@@ -1,5 +1,5 @@
 defaults:
-  orgrepo: istio/istio
+  repo: istio/istio
   nodeSelector: {testing: test-pool}
   clone_tmpl: "https://github.com/{{.Org}}/{{.Repo}}.git"
 
@@ -11,7 +11,7 @@ jobs:
   branches: [master]
   image: alpine:latest
   command: [echo, test1]
-  repos: [istio/test-infra@master]
+  extra_repos: [istio/test-infra]
   nodeSelector: {testing: build-pool}
   output_tmpl: "{{.Org}}/{{.Repo}}/{{.Org}}.{{.Repo}}.gen"
 
@@ -22,6 +22,5 @@ jobs:
   branches: [release-1.5]
   image: alpine:latest
   command: [echo, test2]
-  repos: [istio/test-infra@release-1.5]
+  extra_repos: [istio/test-infra@release-1.5]
   securityContext: {privileged: true}
-

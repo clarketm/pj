@@ -59,13 +59,13 @@ type JobProw struct {
 	//prowv1.DecorationConfig
 
 	Command        []string          `json:"command,omitempty"`
-	OrgRepo        string            `json:"orgrepo,omitempty"`
+	OrgRepo        string            `json:"repo,omitempty"`
 	Aliases        map[string]string `json:"aliases,omitempty"`
 	Types          []JobType         `json:"types,omitempty"`
 	Modifiers      []Modifier        `json:"modifiers,omitempty"`
 	Branches       []string          `json:"branches,omitempty"`
 	SkipBranches   []string          `json:"skip_branches,omitempty"`
-	ExtraRepos     []string          `json:"repos,omitempty"`
+	ExtraRepos     []string          `json:"extra_repos,omitempty"`
 	Name           string            `json:"name,omitempty"`
 	CloneTemplate  string            `json:"clone_tmpl,omitempty"`
 	OutputTemplate string            `json:"output_tmpl,omitempty"`

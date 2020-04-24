@@ -149,26 +149,31 @@ func create(cmd *cobra.Command, args []string) {
 				if job.OutputTemplate != "" {
 					tmpl := prow.ResolveTemplate(job.OutputTemplate, job)
 					path = filepath.Join(output, tmpl)
-					if !osutil.HasExtension(path, "ya?ml") {
+					if !osutil.HasExtension(path, "ya?ml") { // TODO constant
 						path += ".yaml"
 					}
 				} else {
 					path = filepath.Join(output, "prowjobs.yaml")
 				}
 			}
-			
+
 			if _, exists := prowjobs[path]; !exists {
 				prowjobs[path] = prow.NewProwJobConfig()
 			}
 
-			for _, jobType := range jc.Jobs[i].Types {
+			// Default to presubmit
+			if len(job.Types) == 0 {
+				job.Types = []api.JobType{api.Presubmit}
+			}
+
+			for _, jobType := range job.Types {
 				switch jobType {
-				case api.Presubmit:
-					prowjobs[path].AddPresubmit(job.OrgRepo, job)
 				case api.Postsubmit:
 					prowjobs[path].AddPresubmit(job.OrgRepo, job)
 				case api.Periodic:
 					prowjobs[path].AddPeriodic(job)
+				case api.Presubmit:
+					prowjobs[path].AddPresubmit(job.OrgRepo, job)
 				}
 			}
 		}

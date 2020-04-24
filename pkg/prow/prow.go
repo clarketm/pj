@@ -26,9 +26,11 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"strings"
 
 	"github.com/Masterminds/sprig"
 	corev1 "k8s.io/api/core/v1"
+	prowv1 "k8s.io/test-infra/prow/apis/prowjobs/v1"
 	prowapi "k8s.io/test-infra/prow/config"
 
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -67,7 +69,7 @@ func createJobBase(job *api.Job, mods sets.String) prowapi.JobBase {
 			CloneURI:       ResolveTemplate(job.CloneTemplate, job),
 			SkipSubmodules: true, // TODO
 			CloneDepth:     0,
-			ExtraRefs:      nil,
+			ExtraRefs:      createExtraRefs(job.ExtraRepos),
 			//DecorationConfig: &job.DecorationConfig, // TODO
 		},
 	}
@@ -79,6 +81,31 @@ func getOrDefault(m map[string]string, key string, def string) string {
 	} else {
 		return v
 	}
+}
+
+func createExtraRefs(refs []string) []prowv1.Refs {
+	var extraRefs []prowv1.Refs
+
+	for _, ref := range refs {
+		var branch = "master" // TODO constant
+
+		orgrepobranch := strings.Split(ref, "@")
+		if len(orgrepobranch) > 1 {
+			branch = orgrepobranch[1]
+		}
+
+		orgrepo := strings.Split(orgrepobranch[0], "/")
+		org := orgrepo[0]
+		repo := orgrepo[1]
+
+		extraRefs = append(extraRefs, prowv1.Refs{
+			Org:     org,
+			Repo:    repo,
+			BaseRef: branch,
+		})
+	}
+
+	return extraRefs
 }
 
 func jobModifiers(modifiers []api.Modifier) sets.String {

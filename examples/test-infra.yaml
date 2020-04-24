@@ -1,0 +1,28 @@
+defaults:
+  repo: istio/test-infra
+#  image: gcr.io/istio-testing/build-tools:master-2020-04-22T02-05-07
+  nodeSelector: {testing: test-pool}
+  clone_tmpl: "https://github.com/{{.Org}}/{{.Repo}}.git"
+  output_tmpl: "{{.Org}}/{{.Repo}}/{{.Org}}.{{.Repo}}.gen"
+
+jobs:
+- name: lint
+  branches: [master]
+  command: [make, lint]
+
+- name: test
+  command: [make, test]
+
+- name: gencheck
+  command: [make, gen-check]
+
+- name: unit-test-authentikos
+  type: presubmit
+  regex: '^authentikos/(.+\.go|go\.mod)$'
+  command: [make, -C, authentikos, unit-test]
+
+- name: integ-test-authentikos
+  type: presubmit
+  regex: '^authentikos/(test/.+|.+\.go|go\.mod)$'
+  command: [entrypoint, make, -C, authentikos, integ-test]
+  require: [kind, gcp]

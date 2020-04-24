@@ -33,6 +33,13 @@ global_defaults:
           type: Directory
       - name: docker-root
         emptyDir: {}
+    docker:
+      volumeMounts:
+      - mountPath: /var/lib/docker
+        name: docker-root
+      volumes:
+      - name: docker-root
+        emptyDir: {}
     github:
       volumeMounts:
       - name: github
