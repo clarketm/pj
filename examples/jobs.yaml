@@ -1,0 +1,27 @@
+defaults:
+  orgrepo: istio/istio
+  nodeSelector: {testing: test-pool}
+  clone_tmpl: "https://github.com/{{.Org}}/{{.Repo}}.git"
+
+jobs:
+- name: job_1
+  types: [presubmit]
+  require: [github]
+  labels: {app.kubernetes.io/version: 1.0.0}
+  branches: [master]
+  image: alpine:latest
+  command: [echo, test1]
+  repos: [istio/test-infra@master]
+  nodeSelector: {testing: build-pool}
+  output_tmpl: "{{.Org}}/{{.Repo}}/{{.Org}}.{{.Repo}}.gen"
+
+- name: job_2
+  types: [presubmit, postsubmit]
+  require: [gcp, deploy]
+  labels: {app.kubernetes.io/version: 1.0.1}
+  branches: [release-1.5]
+  image: alpine:latest
+  command: [echo, test2]
+  repos: [istio/test-infra@release-1.5]
+  securityContext: {privileged: true}
+

@@ -1,0 +1,3 @@
+global_defaults:
+  namespace: test-pods
+  resources: {requests: {cpu: 1}, limits: {cpu: 3}}
