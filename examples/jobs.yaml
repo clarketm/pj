@@ -22,5 +22,5 @@ jobs:
   branches: [release-1.5]
   image: alpine:latest
   command: [echo, test2]
-  extra_repos: [istio/test-infra@release-1.5]
+  extra_repos: [istio/test-infra@release-1.5, istio/api@master]
   securityContext: {privileged: true}

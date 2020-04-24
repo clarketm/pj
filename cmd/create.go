@@ -114,69 +114,78 @@ func create(cmd *cobra.Command, args []string) {
 			continue
 		}
 
-		f, err := ioutil.ReadFile(input[i])
-		if err != nil {
-			continue
-		}
+		filepath.Walk(input[i], func(inPath string, info os.FileInfo, err error) error {
 
-		var jc api.JobConfiguration
-		if err := yaml.Unmarshal(f, &jc); err != nil {
-			continue
-		}
-
-		for i := range jc.Jobs {
-
-			for _, m := range []interface{}{jc.LocalDefaults, jc.GlobalDefaults, globalConfig} {
-				if err := mergo.Merge(&jc.Jobs[i], m); err != nil {
-					fmt.Println(err)
-					continue
-				}
+			if !osutil.HasExtension(inPath, "ya?ml") { // TODO constant
+				return nil
 			}
 
-			job := &jc.Jobs[i]
-
-			for _, req := range job.Require {
-				if err := mergo.Merge(job, job.Requirements[req]); err != nil {
-					fmt.Println(err)
-					continue
-				}
+			f, err := ioutil.ReadFile(inPath)
+			if err != nil {
+				return nil
 			}
 
-			var path = output
-			err = os.MkdirAll(output, os.ModePerm)
+			var jc api.JobConfiguration
+			if err := yaml.Unmarshal(f, &jc); err != nil {
+				return nil
+			}
 
-			if osutil.IsDirectory(output) {
-				if job.OutputTemplate != "" {
-					tmpl := prow.ResolveTemplate(job.OutputTemplate, job)
-					path = filepath.Join(output, tmpl)
-					if !osutil.HasExtension(path, "ya?ml") { // TODO constant
-						path += ".yaml"
+			for i := range jc.Jobs {
+
+				for _, m := range []interface{}{jc.LocalDefaults, jc.GlobalDefaults, globalConfig} {
+					if err := mergo.Merge(&jc.Jobs[i], m); err != nil {
+						fmt.Println(err)
+						return nil
 					}
-				} else {
-					path = filepath.Join(output, "prowjobs.yaml")
+				}
+
+				job := &jc.Jobs[i]
+
+				for _, req := range job.Require {
+					if err := mergo.Merge(job, job.Requirements[req]); err != nil {
+						fmt.Println(err)
+						return nil
+					}
+				}
+
+				var outPath = output
+				err = os.MkdirAll(output, os.ModePerm)
+
+				if osutil.IsDirectory(output) {
+					if job.OutputTemplate != "" {
+						tmpl := prow.ResolveTemplate(job.OutputTemplate, job)
+						outPath = filepath.Join(output, tmpl)
+						if !osutil.HasExtension(outPath, "ya?ml") { // TODO constant
+							outPath += ".yaml"
+						}
+					} else {
+						outPath = filepath.Join(output, "prowjobs.yaml")
+					}
+				}
+
+				if _, exists := prowjobs[outPath]; !exists {
+					prowjobs[outPath] = prow.NewProwJobConfig()
+				}
+
+				// Default to presubmit
+				if len(job.Types) == 0 {
+					job.Types = []api.JobType{api.Presubmit}
+				}
+
+				for _, jobType := range job.Types {
+					switch jobType {
+					case api.Postsubmit:
+						prowjobs[outPath].AddPresubmit(job.OrgRepo, job)
+					case api.Periodic:
+						prowjobs[outPath].AddPeriodic(job)
+					case api.Presubmit:
+					default:
+						prowjobs[outPath].AddPresubmit(job.OrgRepo, job)
+					}
 				}
 			}
-
-			if _, exists := prowjobs[path]; !exists {
-				prowjobs[path] = prow.NewProwJobConfig()
-			}
-
-			// Default to presubmit
-			if len(job.Types) == 0 {
-				job.Types = []api.JobType{api.Presubmit}
-			}
-
-			for _, jobType := range job.Types {
-				switch jobType {
-				case api.Postsubmit:
-					prowjobs[path].AddPresubmit(job.OrgRepo, job)
-				case api.Periodic:
-					prowjobs[path].AddPeriodic(job)
-				case api.Presubmit:
-					prowjobs[path].AddPresubmit(job.OrgRepo, job)
-				}
-			}
-		}
+			return nil
+		})
 	}
 
 	for path, jobs := range prowjobs {

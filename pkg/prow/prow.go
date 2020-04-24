@@ -26,6 +26,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"sort"
 	"strings"
 
 	"github.com/Masterminds/sprig"
@@ -60,7 +61,7 @@ func createJobBase(job *api.Job, mods sets.String) prowapi.JobBase {
 			NodeSelector: job.NodeSelector,
 		},
 		Annotations: job.Annotations,
-		Hidden:      mods.Has(api.Private),
+		Hidden:      mods.Has(string(api.Private)),
 		//ReporterConfig:  nil, // TODO
 		//RerunAuthConfig: nil, // TODO
 		UtilityConfig: prowapi.UtilityConfig{
@@ -149,8 +150,8 @@ func CreatePresubmit(job *api.Job) prowapi.Presubmit {
 
 	return prowapi.Presubmit{
 		JobBase:      createJobBase(job, mods),
-		AlwaysRun:    !mods.Has(api.Skipped),
-		Optional:     mods.Has(api.Optional),
+		AlwaysRun:    !mods.Has(string(api.Skipped)),
+		Optional:     mods.Has(string(api.Optional)),
 		Trigger:      job.Trigger,
 		RerunCommand: job.RerunCommand,
 		Brancher: prowapi.Brancher{
@@ -161,7 +162,7 @@ func CreatePresubmit(job *api.Job) prowapi.Presubmit {
 			RunIfChanged: job.Regex,
 		},
 		Reporter: prowapi.Reporter{
-			SkipReport: mods.Has(api.Hidden),
+			SkipReport: mods.Has(string(api.Hidden)),
 		},
 	}
 }
@@ -179,7 +180,7 @@ func CreatePostsubmit(job *api.Job) prowapi.Postsubmit {
 			RunIfChanged: job.Regex,
 		},
 		Reporter: prowapi.Reporter{
-			SkipReport: mods.Has(api.Hidden),
+			SkipReport: mods.Has(string(api.Hidden)),
 		},
 	}
 }
@@ -191,6 +192,20 @@ func CreatePeriodic(job *api.Job) prowapi.Periodic {
 		JobBase:  createJobBase(job, mods),
 		Interval: job.Interval,
 		Cron:     job.Cron,
+	}
+}
+
+func comparator(order api.SortOrder) func(a, b string) bool {
+	switch order {
+	case api.Descending:
+		return func(a, b string) bool {
+			return a < b
+		}
+	//case api.Ascending:
+	default:
+		return func(a, b string) bool {
+			return a < b
+		}
 	}
 }
 
@@ -217,4 +232,26 @@ func (o *ProwJobConfig) AddPostsubmit(orgrepo string, job *api.Job) {
 
 func (o *ProwJobConfig) AddPeriodic(job *api.Job) {
 	o.Periodics = append(o.Periodics, CreatePeriodic(job))
+}
+
+func (o *ProwJobConfig) SortPresubmit(order api.SortOrder) {
+	for _, c := range o.Presubmits {
+		sort.Slice(c, func(a, b int) bool {
+			return comparator(order)(c[a].Name, c[b].Name)
+		})
+	}
+}
+
+func (o *ProwJobConfig) SortPostsubmit(order api.SortOrder) {
+	for _, c := range o.Postsubmits {
+		sort.Slice(c, func(a, b int) bool {
+			return comparator(order)(c[a].Name, c[b].Name)
+		})
+	}
+}
+
+func (o *ProwJobConfig) SortPeriodic(order api.SortOrder) {
+	sort.Slice(o.Periodics, func(a, b int) bool {
+		return comparator(order)(o.Periodics[a].Name, o.Periodics[b].Name)
+	})
 }

@@ -25,23 +25,23 @@ package api
 type Modifier string
 
 const (
-	Hidden   = "hidden"
-	Private  = "private"
-	Optional = "optional"
-	Skipped  = "skipped"
+	Hidden   Modifier = "hidden"
+	Private  Modifier = "private"
+	Optional Modifier = "optional"
+	Skipped  Modifier = "skipped"
 )
 
 type JobType string
 
 const (
 	Presubmit  JobType = "presubmit"
-	Postsubmit         = "postsubmit"
-	Periodic           = "periodic"
+	Postsubmit JobType = "postsubmit"
+	Periodic   JobType = "periodic"
 )
 
 type SortOrder string
 
 const (
 	Ascending  SortOrder = "asc"
-	Descending           = "desc"
+	Descending SortOrder = "desc"
 )
