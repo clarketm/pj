@@ -26,96 +26,12 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"sort"
-	"strings"
 
 	"github.com/Masterminds/sprig"
-	corev1 "k8s.io/api/core/v1"
-	prowv1 "k8s.io/test-infra/prow/apis/prowjobs/v1"
 	prowapi "k8s.io/test-infra/prow/config"
-
-	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/clarketm/pjcli/api"
 )
-
-func createJobBase(job *api.Job, mods sets.String) prowapi.JobBase {
-	return prowapi.JobBase{
-		Name:           job.Name,
-		Labels:         job.Labels,
-		MaxConcurrency: job.MaxConcurrency,
-		Cluster:        job.ClusterName,
-		Namespace:      &job.Namespace,
-		Spec: &corev1.PodSpec{
-			Containers: []corev1.Container{
-				{
-					Image:           job.Image,
-					Command:         job.Command,
-					Env:             job.Env,
-					Resources:       job.JobCore.Resources,
-					VolumeMounts:    job.VolumeMounts,
-					SecurityContext: job.Container.SecurityContext,
-				},
-			},
-			Volumes:      job.Volumes,
-			NodeSelector: job.NodeSelector,
-		},
-		Annotations: job.Annotations,
-		Hidden:      mods.Has(string(api.Private)),
-		//ReporterConfig:  nil, // TODO
-		//RerunAuthConfig: nil, // TODO
-		UtilityConfig: prowapi.UtilityConfig{
-			Decorate:       true, // TODO
-			PathAlias:      getOrDefault(job.Aliases, job.Org(), ""),
-			CloneURI:       ResolveTemplate(job.CloneTemplate, job),
-			SkipSubmodules: true, // TODO
-			CloneDepth:     0,
-			ExtraRefs:      createExtraRefs(job.ExtraRepos),
-			//DecorationConfig: &job.DecorationConfig, // TODO
-		},
-	}
-}
-
-func getOrDefault(m map[string]string, key string, def string) string {
-	if v, exists := m[key]; !exists {
-		return def
-	} else {
-		return v
-	}
-}
-
-func createExtraRefs(refs []string) []prowv1.Refs {
-	var extraRefs []prowv1.Refs
-
-	for _, ref := range refs {
-		var branch = "master" // TODO constant
-
-		orgrepobranch := strings.Split(ref, "@")
-		if len(orgrepobranch) > 1 {
-			branch = orgrepobranch[1]
-		}
-
-		orgrepo := strings.Split(orgrepobranch[0], "/")
-		org := orgrepo[0]
-		repo := orgrepo[1]
-
-		extraRefs = append(extraRefs, prowv1.Refs{
-			Org:     org,
-			Repo:    repo,
-			BaseRef: branch,
-		})
-	}
-
-	return extraRefs
-}
-
-func jobModifiers(modifiers []api.Modifier) sets.String {
-	mods := sets.String{}
-	for _, mod := range modifiers {
-		mods.Insert(string(mod))
-	}
-	return mods
-}
 
 func ResolveTemplate(tmplStr string, job *api.Job) string {
 	if tmplStr == "" {
@@ -193,65 +109,4 @@ func CreatePeriodic(job *api.Job) prowapi.Periodic {
 		Interval: job.Interval,
 		Cron:     job.Cron,
 	}
-}
-
-func comparator(order api.SortOrder) func(a, b string) bool {
-	switch order {
-	case api.Descending:
-		return func(a, b string) bool {
-			return a < b
-		}
-	//case api.Ascending:
-	default:
-		return func(a, b string) bool {
-			return a < b
-		}
-	}
-}
-
-type ProwJobConfig struct {
-	Presubmits  map[string][]prowapi.Presubmit
-	Postsubmits map[string][]prowapi.Postsubmit
-	Periodics   []prowapi.Periodic
-}
-
-func NewProwJobConfig() *ProwJobConfig {
-	var pjc ProwJobConfig
-	pjc.Presubmits = make(map[string][]prowapi.Presubmit)
-	pjc.Postsubmits = make(map[string][]prowapi.Postsubmit)
-	return &pjc
-}
-
-func (o *ProwJobConfig) AddPresubmit(orgrepo string, job *api.Job) {
-	o.Presubmits[orgrepo] = append(o.Presubmits[orgrepo], CreatePresubmit(job))
-}
-
-func (o *ProwJobConfig) AddPostsubmit(orgrepo string, job *api.Job) {
-	o.Postsubmits[orgrepo] = append(o.Postsubmits[orgrepo], CreatePostsubmit(job))
-}
-
-func (o *ProwJobConfig) AddPeriodic(job *api.Job) {
-	o.Periodics = append(o.Periodics, CreatePeriodic(job))
-}
-
-func (o *ProwJobConfig) SortPresubmit(order api.SortOrder) {
-	for _, c := range o.Presubmits {
-		sort.Slice(c, func(a, b int) bool {
-			return comparator(order)(c[a].Name, c[b].Name)
-		})
-	}
-}
-
-func (o *ProwJobConfig) SortPostsubmit(order api.SortOrder) {
-	for _, c := range o.Postsubmits {
-		sort.Slice(c, func(a, b int) bool {
-			return comparator(order)(c[a].Name, c[b].Name)
-		})
-	}
-}
-
-func (o *ProwJobConfig) SortPeriodic(order api.SortOrder) {
-	sort.Slice(o.Periodics, func(a, b int) bool {
-		return comparator(order)(o.Periodics[a].Name, o.Periodics[b].Name)
-	})
 }

@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package strings
+package maps
 
 import (
 	"sort"
@@ -37,4 +37,12 @@ func SortedKeys(m map[string]string) []string {
 	sort.Strings(keys)
 
 	return keys
+}
+
+func GetOrDefault(m map[string]string, key string, def string) string {
+	if v, exists := m[key]; !exists {
+		return def
+	} else {
+		return v
+	}
 }
