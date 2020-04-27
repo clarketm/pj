@@ -1,6 +1,10 @@
-# pj (ProwJob CLI)
+# pj
 
-ProwJob (PJ) job manager.
+pj is a command line tool for managing ProwJobs (PJs).
+
+## Installing
+
+## Getting Started
 
 ## Subcommands
 
