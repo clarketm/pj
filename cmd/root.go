@@ -31,9 +31,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
+const (
+	version = "0.0.1"
+)
 
 var (
+	cfgFile   string
 	rootUse   = "pj"
 	rootShort = "ProwJob job manager"
 	rootLong  = "ProwJob job manager"
@@ -57,8 +60,9 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.pj.yaml)")
-	//rootCmd.PersistentFlags().BoolP("clean", "c", false, "Clean output files before run.")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $HOME/.pj.yaml).")
+	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose output.")
+	rootCmd.PersistentFlags().String("version", version, "Version number.")
 }
 
 // initConfig reads in config file and ENV variables if set.
