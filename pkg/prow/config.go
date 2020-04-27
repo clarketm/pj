@@ -43,6 +43,10 @@ func NewProwJobConfig() *ProwJobConfig {
 	return &pjc
 }
 
+func (o *ProwJobConfig) Empty() bool {
+	return len(o.Presubmits) == 0 && len(o.Postsubmits) == 0 && len(o.Periodics) == 0
+}
+
 func (o *ProwJobConfig) AddPresubmit(orgrepo string, job *api.Job) {
 	o.Presubmits[orgrepo] = append(o.Presubmits[orgrepo], CreatePresubmit(job))
 }

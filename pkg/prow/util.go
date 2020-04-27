@@ -111,7 +111,8 @@ func comparator(order api.SortOrder) func(a, b string) bool {
 		return func(a, b string) bool {
 			return a < b
 		}
-	//case api.Ascending:
+	case api.Ascending:
+		fallthrough
 	default:
 		return func(a, b string) bool {
 			return a < b

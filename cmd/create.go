@@ -179,6 +179,7 @@ func create(cmd *cobra.Command, args []string) {
 					case api.Periodic:
 						prowjobs[outPath].AddPeriodic(job)
 					case api.Presubmit:
+						fallthrough
 					default:
 						prowjobs[outPath].AddPresubmit(job.OrgRepo, job)
 					}
@@ -189,6 +190,10 @@ func create(cmd *cobra.Command, args []string) {
 	}
 
 	for path, jobs := range prowjobs {
+		if jobs.Empty() {
+			continue
+		}
+
 		jobConfig := prowapi.JobConfig{}
 
 		dir := filepath.Dir(path)
