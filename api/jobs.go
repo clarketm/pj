@@ -42,11 +42,6 @@ type JobCore struct {
 	metav1.ObjectMeta
 	corev1.Container
 	corev1.PodSpec
-
-	// overrides
-	//Containers        Empty                        `json:"containers,omitempty"`
-	//CreationTimestamp Empty                        `json:"creationTimestamp,omitempty"`
-	//Resources         *corev1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 type JobPeriodic struct {
@@ -86,9 +81,9 @@ type Job struct {
 }
 
 func (j *Job) Org() string {
-	return strings.Split(j.OrgRepo, "/")[:1][0]
+	return strings.Split(j.OrgRepo, "/")[0]
 }
 
 func (j *Job) Repo() string {
-	return strings.Split(j.OrgRepo, "/")[1:][0]
+	return strings.Split(j.OrgRepo, "/")[1]
 }

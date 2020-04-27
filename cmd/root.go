@@ -35,13 +35,8 @@ var cfgFile string
 
 var (
 	rootUse   = "pjcli"
-	rootShort = "A brief description of your application"
-	rootLong  = `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`
+	rootShort = "ProwJob job manager"
+	rootLong  = "ProwJob job manager"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -63,7 +58,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.pjcli.yaml)")
-	rootCmd.PersistentFlags().BoolP("clean", "c", false, "Clean output files before run.")
+	//rootCmd.PersistentFlags().BoolP("clean", "c", false, "Clean output files before run.")
 }
 
 // initConfig reads in config file and ENV variables if set.

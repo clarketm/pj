@@ -38,14 +38,19 @@ import (
 	"github.com/clarketm/pjcli/pkg/prow"
 )
 
-var createShort = "A brief description of your command"
+var createShort = "Create ProwJob yaml configuration"
 
-var createLong = `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+var createLong = `Create ProwJob yaml configuration
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`
+# Create ProwJobs using short options.
+pjcli create -g ./examples/global1.yaml -i ./examples/jobs.yaml -o ./jobs
+
+# Create ProwJobs using long options.
+pjcli create --global ./examples/global1.yaml --input ./examples/jobs.yaml --output ./jobs
+
+# Create ProwJobs using input from stdin and ouput to stdout.
+pjcli create
+`
 
 // createCmd represents the create command
 var createCmd = &cobra.Command{
