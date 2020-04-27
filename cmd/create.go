@@ -72,11 +72,6 @@ func create(cmd *cobra.Command, args []string) {
 	var err error
 	var prowjobs = make(map[string]*prow.ProwJobConfig)
 
-	clean, _ := cmd.Flags().GetBool("clean")
-	if clean {
-		fmt.Println("\ncleaning...\n")
-	}
-
 	global, _ := cmd.Flags().GetStringSlice("global")
 	input, _ := cmd.Flags().GetStringSlice("input")
 	output, _ := cmd.Flags().GetString("output")

@@ -28,6 +28,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	prowv1 "k8s.io/test-infra/prow/apis/prowjobs/v1"
 )
 
 type Empty *struct{}
@@ -51,7 +52,9 @@ type JobPeriodic struct {
 }
 
 type JobProw struct {
-	//prowv1.DecorationConfig
+	*prowv1.DecorationConfig `json:"decoration_config,omitempty"`
+	*prowv1.RerunAuthConfig  `json:"rerun_auth_config,omitempty"`
+	*prowv1.ReporterConfig   `json:"reporter_config,omitempty"`
 
 	Command        []string          `json:"command,omitempty"`
 	OrgRepo        string            `json:"repo,omitempty"`

@@ -56,18 +56,18 @@ func createJobBase(job *api.Job, mods sets.String) prowapi.JobBase {
 			Volumes:      job.Volumes,
 			NodeSelector: job.NodeSelector,
 		},
-		Annotations: job.Annotations,
-		Hidden:      mods.Has(string(api.Private)),
-		//ReporterConfig:  nil, // TODO
-		//RerunAuthConfig: nil, // TODO
+		Annotations:     job.Annotations,
+		Hidden:          mods.Has(string(api.Private)),
+		ReporterConfig:  job.ReporterConfig,
+		RerunAuthConfig: job.RerunAuthConfig,
 		UtilityConfig: prowapi.UtilityConfig{
-			Decorate:       true, // TODO
-			PathAlias:      maps.GetOrDefault(job.Aliases, job.Org(), ""),
-			CloneURI:       ResolveTemplate(job.CloneTemplate, job),
-			SkipSubmodules: true, // TODO
-			CloneDepth:     0,
-			ExtraRefs:      createExtraRefs(job.ExtraRepos),
-			//DecorationConfig: &job.DecorationConfig, // TODO
+			Decorate:         true, // TODO
+			PathAlias:        maps.GetOrDefault(job.Aliases, job.Org(), ""),
+			CloneURI:         ResolveTemplate(job.CloneTemplate, job),
+			SkipSubmodules:   true, // TODO
+			CloneDepth:       0,    // TODO
+			ExtraRefs:        createExtraRefs(job.ExtraRepos),
+			DecorationConfig: job.DecorationConfig,
 		},
 	}
 }
