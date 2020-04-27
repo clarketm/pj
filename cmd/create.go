@@ -23,15 +23,17 @@
 package cmd
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/imdario/mergo"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	prowapi "k8s.io/test-infra/prow/config"
 	"sigs.k8s.io/yaml"
+
+	"github.com/hashicorp/go-multierror"
 
 	"github.com/clarketm/pj/api"
 	osutil "github.com/clarketm/pj/pkg/os"
@@ -57,7 +59,7 @@ var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: createShort,
 	Long:  createLong,
-	Run:   create,
+	RunE:  create,
 }
 
 func init() {
@@ -67,99 +69,121 @@ func init() {
 	createCmd.Flags().StringP("output", "o", "/dev/stdout", "Output directory.")
 }
 
-func create(cmd *cobra.Command, args []string) {
+func create(cmd *cobra.Command, args []string) error {
 	var globalConfig api.Job
-	var err error
 	var prowjobs = make(map[string]*prow.ProwJobConfig)
 
-	global, _ := cmd.Flags().GetStringSlice("global")
-	input, _ := cmd.Flags().GetStringSlice("input")
-	output, _ := cmd.Flags().GetString("output")
-
-	if output, err = filepath.Abs(output); err != nil {
-		fmt.Println(err)
-		return
+	global, err := cmd.Flags().GetStringSlice("global")
+	if err != nil {
+		return errors.Wrapf(err, "getting global flag")
 	}
 
+	input, err := cmd.Flags().GetStringSlice("input")
+	if err != nil {
+		return errors.Wrapf(err, "getting input flag")
+	}
+
+	output, err := cmd.Flags().GetString("output")
+	if err != nil {
+		return errors.Wrapf(err, "getting output flag")
+	}
+
+	// Process output directory.
+	if output, err = filepath.Abs(output); err != nil {
+		return errors.Wrapf(err, "getting output path: %s", output)
+	}
+
+	if err = os.MkdirAll(output, os.ModePerm); err != nil {
+		err = multierror.Append(errors.Wrapf(err, "creating output directory: %s", output))
+	}
+
+	// Process global configuration files.
 	for i, g := range global {
+
 		if global[i], err = filepath.Abs(g); err != nil {
+			err = multierror.Append(errors.Wrapf(err, "getting global path: %s", global[i]))
 			continue
 		}
 
 		if !osutil.Exists(global[i]) {
+			err = multierror.Append(errors.Wrapf(err, "global path exists: %s", global[i]))
 			continue
 		}
 
 		f, err := ioutil.ReadFile(global[i])
 		if err != nil {
+			err = multierror.Append(errors.Wrapf(err, "reading global path: %s", global[i]))
 			continue
 		}
 
 		var gc api.JobConfiguration
 		if err := yaml.Unmarshal(f, &gc); err != nil {
+			err = multierror.Append(errors.Wrapf(err, "unmarshal global config: %s", global[i]))
 			continue
 		}
 
 		if err := mergo.Merge(&globalConfig, gc.GlobalDefaults); err != nil {
+			err = multierror.Append(errors.Wrapf(err, "merge global config: %s", global[i]))
 			continue
 		}
 	}
 
+	// Process input configuration files and defaults.
 	for i, j := range input {
 		if input[i], err = filepath.Abs(j); err != nil {
+			err = multierror.Append(errors.Wrapf(err, "getting input path: %s", input[i]))
 			continue
 		}
 
 		if !osutil.Exists(input[i]) {
+			err = multierror.Append(errors.Wrapf(err, "input path exists: %s", input[i]))
 			continue
 		}
 
-		filepath.Walk(input[i], func(inPath string, info os.FileInfo, err error) error {
+		// Process job configuration.
+		if err = filepath.Walk(input[i], func(inPath string, info os.FileInfo, err error) error {
 
-			if !osutil.HasExtension(inPath, "ya?ml") { // TODO constant
+			if !osutil.HasExtension(inPath, prow.YamlExt) {
 				return nil
 			}
 
 			f, err := ioutil.ReadFile(inPath)
 			if err != nil {
+				err = multierror.Append(errors.Wrapf(err, "reading input path: %s", inPath))
 				return nil
 			}
 
 			var jc api.JobConfiguration
 			if err := yaml.Unmarshal(f, &jc); err != nil {
+				err = multierror.Append(errors.Wrapf(err, "unmarshal input config: %s", inPath))
 				return nil
 			}
 
 			for i := range jc.Jobs {
+				job := &jc.Jobs[i]
 
 				for _, m := range []interface{}{jc.LocalDefaults, jc.GlobalDefaults, globalConfig} {
-					if err := mergo.Merge(&jc.Jobs[i], m); err != nil {
-						fmt.Println(err)
+					if err := mergo.Merge(job, m); err != nil {
+						err = multierror.Append(errors.Wrapf(err, "merge input config: %s", inPath))
 						return nil
 					}
 				}
 
-				job := &jc.Jobs[i]
-
 				for _, req := range job.Require {
 					if err := mergo.Merge(job, job.Requirements[req]); err != nil {
-						fmt.Println(err)
+						err = multierror.Append(errors.Wrapf(err, "merge requirement: %s", req))
 						return nil
 					}
 				}
 
 				var outPath = output
-				err = os.MkdirAll(output, os.ModePerm)
 
 				if osutil.IsDirectory(output) {
 					if job.OutputTemplate != "" {
 						tmpl := prow.ResolveTemplate(job.OutputTemplate, job)
 						outPath = filepath.Join(output, tmpl)
-						if !osutil.HasExtension(outPath, "ya?ml") { // TODO constant
-							outPath += ".yaml"
-						}
 					} else {
-						outPath = filepath.Join(output, "prowjobs.yaml")
+						outPath = filepath.Join(output, prow.DefaultOutput)
 					}
 				}
 
@@ -167,7 +191,7 @@ func create(cmd *cobra.Command, args []string) {
 					prowjobs[outPath] = prow.NewProwJobConfig()
 				}
 
-				// Default to presubmit
+				// Default to presubmit if unspecified.
 				if len(job.Types) == 0 {
 					job.Types = []api.JobType{api.Presubmit}
 				}
@@ -186,7 +210,9 @@ func create(cmd *cobra.Command, args []string) {
 				}
 			}
 			return nil
-		})
+		}); err != nil {
+			err = multierror.Append(errors.Wrapf(err, "walking input path: %s", input[i]))
+		}
 	}
 
 	for path, jobs := range prowjobs {
@@ -196,26 +222,35 @@ func create(cmd *cobra.Command, args []string) {
 
 		jobConfig := prowapi.JobConfig{}
 
-		dir := filepath.Dir(path)
-		err = os.MkdirAll(dir, os.ModePerm)
-
 		if err = jobConfig.SetPresubmits(jobs.Presubmits); err != nil {
-			fmt.Println(err)
+			err = multierror.Append(errors.Wrapf(err, "settings presubmits: %s", path))
 		}
 
 		if err = jobConfig.SetPostsubmits(jobs.Postsubmits); err != nil {
-			fmt.Println(err)
+			err = multierror.Append(errors.Wrapf(err, "settings postsubmits: %s", path))
 		}
 
 		jobConfig.Periodics = jobs.Periodics
 
 		jobConfigYaml, err := yaml.Marshal(jobConfig)
 		if err != nil {
-			fmt.Println(err)
+			err = multierror.Append(errors.Wrapf(err, "marshal job config: %s", path))
+			continue
 		}
 
-		if err = ioutil.WriteFile(path, jobConfigYaml, 0644); err != nil {
-			fmt.Println(err)
+		dir := filepath.Dir(path)
+		if err = os.MkdirAll(dir, os.ModePerm); err != nil {
+			err = multierror.Append(errors.Wrapf(err, "creating directory: %s", path))
+			continue
+		}
+
+		outBytes := []byte(prow.AutogenHeader)
+		outBytes = append(outBytes, jobConfigYaml...)
+
+		if err = ioutil.WriteFile(path, outBytes, 0644); err != nil {
+			err = multierror.Append(errors.Wrapf(err, "writing job config: %s", path))
 		}
 	}
+
+	return err
 }

@@ -45,25 +45,17 @@ type JobCore struct {
 	corev1.PodSpec
 }
 
-type JobPeriodic struct {
-	Cron     string `json:"cron,omitempty"`
-	Interval string `json:"interval,omitempty"`
-	//Interval time.Duration `json:"interval,omitempty"`
-}
-
 type JobProw struct {
 	*prowv1.DecorationConfig `json:"decoration_config,omitempty"`
 	*prowv1.RerunAuthConfig  `json:"rerun_auth_config,omitempty"`
 	*prowv1.ReporterConfig   `json:"reporter_config,omitempty"`
 
 	Command        []string          `json:"command,omitempty"`
-	OrgRepo        string            `json:"repo,omitempty"`
-	Aliases        map[string]string `json:"aliases,omitempty"`
-	Types          []JobType         `json:"types,omitempty"`
-	Modifiers      []Modifier        `json:"modifiers,omitempty"`
 	Branches       []string          `json:"branches,omitempty"`
 	SkipBranches   []string          `json:"skip_branches,omitempty"`
 	ExtraRepos     []string          `json:"extra_repos,omitempty"`
+	Require        []string          `json:"require,omitempty"`
+	OrgRepo        string            `json:"repo,omitempty"`
 	Name           string            `json:"name,omitempty"`
 	CloneTemplate  string            `json:"clone_tmpl,omitempty"`
 	OutputTemplate string            `json:"output_tmpl,omitempty"`
@@ -72,15 +64,23 @@ type JobProw struct {
 	Trigger        string            `json:"trigger,omitempty"`
 	RerunCommand   string            `json:"rerun_command,omitempty"`
 	MaxConcurrency int               `json:"max_concurrency,omitempty"`
+	Aliases        map[string]string `json:"aliases,omitempty"`
+	Requirements   map[string]Job    `json:"requirements,omitempty"`
+	Types          []JobType         `json:"types,omitempty"`
+	Modifiers      []Modifier        `json:"modifiers,omitempty"`
 	Timeout        time.Duration     `json:"timeout,omitempty"`
-	Require        []string          `json:"require,omitempty"`
+}
+
+type JobPeriodic struct {
+	Cron     string         `json:"cron,omitempty"`
+	Interval string         `json:"interval,omitempty"`
+	//Interval *time.Duration `json:"interval,omitempty"`
 }
 
 type Job struct {
 	JobCore
 	JobProw
 	JobPeriodic
-	Requirements map[string]Job `json:"requirements,omitempty"`
 }
 
 func (j *Job) Org() string {
