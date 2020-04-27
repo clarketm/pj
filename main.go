@@ -21,7 +21,7 @@
 */
 package main
 
-import "github.com/clarketm/pjcli/cmd"
+import "github.com/clarketm/pj/cmd"
 
 func main() {
 	cmd.Execute()

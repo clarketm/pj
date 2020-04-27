@@ -30,7 +30,7 @@ import (
 	"github.com/Masterminds/sprig"
 	prowapi "k8s.io/test-infra/prow/config"
 
-	"github.com/clarketm/pjcli/api"
+	"github.com/clarketm/pj/api"
 )
 
 func ResolveTemplate(tmplStr string, job *api.Job) string {

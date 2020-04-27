@@ -34,7 +34,7 @@ import (
 var cfgFile string
 
 var (
-	rootUse   = "pjcli"
+	rootUse   = "pj"
 	rootShort = "ProwJob job manager"
 	rootLong  = "ProwJob job manager"
 )
@@ -57,7 +57,7 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.pjcli.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.pj.yaml)")
 	//rootCmd.PersistentFlags().BoolP("clean", "c", false, "Clean output files before run.")
 }
 
@@ -74,9 +74,9 @@ func initConfig() {
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".pjcli" (without extension).
+		// Search config in home directory with name ".pj" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".pjcli")
+		viper.SetConfigName(".pj")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match

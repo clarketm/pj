@@ -1,4 +1,4 @@
-module github.com/clarketm/pjcli
+module github.com/clarketm/pj
 
 go 1.14
 

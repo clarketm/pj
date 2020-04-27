@@ -31,8 +31,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"github.com/clarketm/pjcli/api"
-	"github.com/clarketm/pjcli/pkg/maps"
+	"github.com/clarketm/pj/api"
+	"github.com/clarketm/pj/pkg/maps"
 )
 
 func createJobBase(job *api.Job, mods sets.String) prowapi.JobBase {

@@ -33,9 +33,9 @@ import (
 	prowapi "k8s.io/test-infra/prow/config"
 	"sigs.k8s.io/yaml"
 
-	"github.com/clarketm/pjcli/api"
-	osutil "github.com/clarketm/pjcli/pkg/os"
-	"github.com/clarketm/pjcli/pkg/prow"
+	"github.com/clarketm/pj/api"
+	osutil "github.com/clarketm/pj/pkg/os"
+	"github.com/clarketm/pj/pkg/prow"
 )
 
 var createShort = "Create ProwJob yaml configuration"
@@ -43,13 +43,13 @@ var createShort = "Create ProwJob yaml configuration"
 var createLong = `Create ProwJob yaml configuration
 
 # Create ProwJobs using short options.
-pjcli create -g ./examples/global1.yaml -i ./examples/jobs.yaml -o ./jobs
+pj create -g ./examples/global1.yaml -i ./examples/jobs.yaml -o ./jobs
 
 # Create ProwJobs using long options.
-pjcli create --global ./examples/global1.yaml --input ./examples/jobs.yaml --output ./jobs
+pj create --global ./examples/global1.yaml --input ./examples/jobs.yaml --output ./jobs
 
 # Create ProwJobs using input from stdin and ouput to stdout.
-pjcli create
+pj create
 `
 
 // createCmd represents the create command

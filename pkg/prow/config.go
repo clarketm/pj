@@ -27,7 +27,7 @@ import (
 
 	prowapi "k8s.io/test-infra/prow/config"
 
-	"github.com/clarketm/pjcli/api"
+	"github.com/clarketm/pj/api"
 )
 
 type ProwJobConfig struct {
