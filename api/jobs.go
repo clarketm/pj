@@ -51,6 +51,7 @@ type JobProw struct {
 	*prowv1.ReporterConfig   `json:"reporter_config,omitempty"`
 
 	Command        []string          `json:"command,omitempty"`
+	Branch         string            `json:"branch,omitempty"`
 	Branches       []string          `json:"branches,omitempty"`
 	SkipBranches   []string          `json:"skip_branches,omitempty"`
 	ExtraRepos     []string          `json:"extra_repos,omitempty"`

@@ -195,6 +195,10 @@ func create(cmd *cobra.Command, args []string) error {
 					prowjobs[outPath] = prow.NewProwJobConfig()
 				}
 
+				if job.Branch != "" {
+					job.Branches = append(job.Branches, job.Branch)
+				}
+
 				if job.Type != "" {
 					job.Types = append(job.Types, job.Type)
 				}
