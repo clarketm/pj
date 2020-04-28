@@ -24,7 +24,6 @@ package api
 
 import (
 	"strings"
-	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -67,15 +66,14 @@ type JobProw struct {
 	MaxConcurrency int               `json:"max_concurrency,omitempty"`
 	Aliases        map[string]string `json:"aliases,omitempty"`
 	Requirements   map[string]Job    `json:"requirements,omitempty"`
+	Type           JobType           `json:"type,omitempty"`
 	Types          []JobType         `json:"types,omitempty"`
 	Modifiers      []Modifier        `json:"modifiers,omitempty"`
-	Timeout        time.Duration     `json:"timeout,omitempty"`
 }
 
 type JobPeriodic struct {
 	Cron     string `json:"cron,omitempty"`
 	Interval string `json:"interval,omitempty"`
-	//Interval *time.Duration `json:"interval,omitempty"`
 }
 
 type Job struct {

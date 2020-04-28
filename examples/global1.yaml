@@ -1,2 +1,3 @@
 aliases: {istio: istio.io}
 clusterName: default
+output_tmpl: "{{.Org}}/{{.Repo}}/{{.Org}}.{{.Repo}}.gen"

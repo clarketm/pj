@@ -14,7 +14,6 @@ jobs:
   nodeSelector: {testing: build-pool}
   decoration_config:
     timeout: "2h"
-  output_tmpl: "{{.Org}}/{{.Repo}}/{{.Org}}.{{.Repo}}.gen"
 
 - name: job_2
   types: [presubmit, postsubmit]
