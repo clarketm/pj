@@ -195,18 +195,7 @@ func create(cmd *cobra.Command, args []string) error {
 					prowjobs[outPath] = prow.NewProwJobConfig()
 				}
 
-				if job.Branch != "" {
-					job.Branches = append(job.Branches, job.Branch)
-				}
-
-				if job.Type != "" {
-					job.Types = append(job.Types, job.Type)
-				}
-
-				// Default to presubmit if unspecified.
-				if len(job.Types) == 0 {
-					job.Types = []api.JobType{api.Presubmit}
-				}
+				prow.SetDefaults(job)
 
 				for _, jobType := range job.Types {
 					switch jobType {
@@ -232,9 +221,9 @@ func create(cmd *cobra.Command, args []string) error {
 
 		jobConfig := prowapi.JobConfig{}
 
-		jobs.SortPeriodic(api.Ascending)
-		jobs.SortPresubmit(api.Ascending)
-		jobs.SortPostsubmit(api.Ascending)
+		jobs.SortPeriodic(prow.Ascending)
+		jobs.SortPresubmit(prow.Ascending)
+		jobs.SortPostsubmit(prow.Ascending)
 
 		if err = jobConfig.SetPresubmits(jobs.Presubmits); err != nil {
 			errorList = multierror.Append(errors.Wrapf(err, "settings presubmits: %s", path))

@@ -30,6 +30,13 @@ import (
 	"github.com/clarketm/pj/api"
 )
 
+type SortOrder string
+
+const (
+	Ascending  SortOrder = "asc"
+	Descending SortOrder = "desc"
+)
+
 type ProwJobConfig struct {
 	Presubmits  map[string][]prowapi.Presubmit
 	Postsubmits map[string][]prowapi.Postsubmit
@@ -59,7 +66,7 @@ func (o *ProwJobConfig) AddPeriodic(job *api.Job) {
 	o.Periodics = append(o.Periodics, CreatePeriodic(job))
 }
 
-func (o *ProwJobConfig) SortPresubmit(order api.SortOrder) {
+func (o *ProwJobConfig) SortPresubmit(order SortOrder) {
 	for _, c := range o.Presubmits {
 		sort.Slice(c, func(a, b int) bool {
 			return comparator(order)(c[a].Name, c[b].Name)
@@ -67,7 +74,7 @@ func (o *ProwJobConfig) SortPresubmit(order api.SortOrder) {
 	}
 }
 
-func (o *ProwJobConfig) SortPostsubmit(order api.SortOrder) {
+func (o *ProwJobConfig) SortPostsubmit(order SortOrder) {
 	for _, c := range o.Postsubmits {
 		sort.Slice(c, func(a, b int) bool {
 			return comparator(order)(c[a].Name, c[b].Name)
@@ -75,8 +82,23 @@ func (o *ProwJobConfig) SortPostsubmit(order api.SortOrder) {
 	}
 }
 
-func (o *ProwJobConfig) SortPeriodic(order api.SortOrder) {
+func (o *ProwJobConfig) SortPeriodic(order SortOrder) {
 	sort.Slice(o.Periodics, func(a, b int) bool {
 		return comparator(order)(o.Periodics[a].Name, o.Periodics[b].Name)
 	})
+}
+
+func comparator(order SortOrder) func(a, b string) bool {
+	switch order {
+	case Descending:
+		return func(a, b string) bool {
+			return a < b
+		}
+	case Ascending:
+		fallthrough
+	default:
+		return func(a, b string) bool {
+			return a < b
+		}
+	}
 }

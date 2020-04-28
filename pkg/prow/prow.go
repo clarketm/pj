@@ -26,11 +26,17 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"strings"
 
 	"github.com/Masterminds/sprig"
+	corev1 "k8s.io/api/core/v1"
+	prowv1 "k8s.io/test-infra/prow/apis/prowjobs/v1"
 	prowapi "k8s.io/test-infra/prow/config"
 
+	"k8s.io/apimachinery/pkg/util/sets"
+
 	"github.com/clarketm/pj/api"
+	"github.com/clarketm/pj/pkg/maps"
 )
 
 func ResolveTemplate(tmplStr string, job *api.Job) string {
@@ -59,6 +65,24 @@ func ResolveTemplate(tmplStr string, job *api.Job) string {
 	}
 
 	return b.String()
+}
+
+func SetDefaults(job *api.Job) {
+	if job.Branch != "" {
+		job.Branches = append(job.Branches, job.Branch)
+	}
+
+	if len(job.Branches) == 0 {
+		job.Branches = []string{DefaultBranch}
+	}
+
+	if job.Type != "" {
+		job.Types = append(job.Types, job.Type)
+	}
+
+	if len(job.Types) == 0 {
+		job.Types = []api.JobType{api.Presubmit}
+	}
 }
 
 func CreatePresubmit(job *api.Job) prowapi.Presubmit {
@@ -109,4 +133,74 @@ func CreatePeriodic(job *api.Job) prowapi.Periodic {
 		Interval: job.Interval,
 		Cron:     job.Cron,
 	}
+}
+
+func createJobBase(job *api.Job, mods sets.String) prowapi.JobBase {
+	return prowapi.JobBase{
+		Name:           job.Name,
+		Labels:         job.Labels,
+		MaxConcurrency: job.MaxConcurrency,
+		Cluster:        job.ClusterName,
+		Namespace:      &job.Namespace,
+		Spec: &corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Image:           job.Image,
+					Command:         job.Command,
+					Env:             job.Env,
+					Resources:       job.JobCore.Resources,
+					VolumeMounts:    job.VolumeMounts,
+					SecurityContext: job.Container.SecurityContext,
+				},
+			},
+			Volumes:      job.Volumes,
+			NodeSelector: job.NodeSelector,
+		},
+		Annotations:     job.Annotations,
+		Hidden:          mods.Has(string(api.Private)),
+		ReporterConfig:  job.ReporterConfig,
+		RerunAuthConfig: job.RerunAuthConfig,
+		UtilityConfig: prowapi.UtilityConfig{
+			Decorate:         true, // TODO
+			PathAlias:        maps.GetOrDefault(job.Aliases, job.Org(), ""),
+			CloneURI:         ResolveTemplate(job.CloneTemplate, job),
+			SkipSubmodules:   true, // TODO
+			CloneDepth:       0,    // TODO
+			ExtraRefs:        createExtraRefs(job.ExtraRepos),
+			DecorationConfig: job.DecorationConfig,
+		},
+	}
+}
+
+func createExtraRefs(refs []string) []prowv1.Refs {
+	var extraRefs []prowv1.Refs
+
+	for _, ref := range refs {
+		var branch = "master" // TODO constant
+
+		orgrepobranch := strings.Split(ref, "@")
+		if len(orgrepobranch) > 1 {
+			branch = orgrepobranch[1]
+		}
+
+		orgrepo := strings.Split(orgrepobranch[0], "/")
+		org := orgrepo[0]
+		repo := orgrepo[1]
+
+		extraRefs = append(extraRefs, prowv1.Refs{
+			Org:     org,
+			Repo:    repo,
+			BaseRef: branch,
+		})
+	}
+
+	return extraRefs
+}
+
+func jobModifiers(modifiers []api.Modifier) sets.String {
+	mods := sets.String{}
+	for _, mod := range modifiers {
+		mods.Insert(string(mod))
+	}
+	return mods
 }

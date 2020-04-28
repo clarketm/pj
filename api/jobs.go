@@ -30,6 +30,23 @@ import (
 	prowv1 "k8s.io/test-infra/prow/apis/prowjobs/v1"
 )
 
+type Modifier string
+
+const (
+	Hidden   Modifier = "hidden"
+	Private  Modifier = "private"
+	Optional Modifier = "optional"
+	Skipped  Modifier = "skipped"
+)
+
+type JobType string
+
+const (
+	Presubmit  JobType = "presubmit"
+	Postsubmit JobType = "postsubmit"
+	Periodic   JobType = "periodic"
+)
+
 type Empty *struct{}
 
 type Defaults Job
