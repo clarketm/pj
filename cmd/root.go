@@ -32,7 +32,8 @@ import (
 )
 
 const (
-	version = "0.0.1"
+	version    = "0.0.1"
+	configName = ".pj"
 )
 
 var (
@@ -47,6 +48,7 @@ var rootCmd = &cobra.Command{
 	Use:   rootUse,
 	Short: rootShort,
 	Long:  rootLong,
+	RunE:  root,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -60,9 +62,9 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $HOME/.pj.yaml).")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", fmt.Sprintf("Config file (default is $HOME/%s.yaml).", configName))
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose output.")
-	rootCmd.PersistentFlags().String("version", version, "Version number.")
+	rootCmd.PersistentFlags().Bool("version", false, "Version number.")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -80,7 +82,7 @@ func initConfig() {
 
 		// Search config in home directory with name ".pj" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".pj")
+		viper.SetConfigName(configName)
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
@@ -89,4 +91,12 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
+}
+
+func root(cmd *cobra.Command, args []string) error {
+	v, err := cmd.Flags().GetBool("version")
+	if v {
+		fmt.Println(version)
+	}
+	return err
 }

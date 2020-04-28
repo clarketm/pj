@@ -67,6 +67,7 @@ func init() {
 	createCmd.Flags().StringSliceP("global", "g", []string{}, "Global configuration files.")
 	createCmd.Flags().StringSliceP("input", "i", []string{"/dev/stdin"}, "Input files and/or directories.")
 	createCmd.Flags().StringP("output", "o", "/dev/stdout", "Output directory.")
+	createCmd.Flags().StringP("sort", "s", "asc", "Sort jobs (asc|desc).")
 }
 
 func create(cmd *cobra.Command, args []string) error {
@@ -89,13 +90,14 @@ func create(cmd *cobra.Command, args []string) error {
 		return errors.Wrapf(err, "getting output flag")
 	}
 
+	sort, err := cmd.Flags().GetString("sort")
+	if err != nil {
+		return errors.Wrapf(err, "getting sort flag")
+	}
+
 	// Process output directory.
 	if output, err = filepath.Abs(output); err != nil {
 		return errors.Wrapf(err, "getting output path: %s", output)
-	}
-
-	if err = os.MkdirAll(output, os.ModePerm); err != nil {
-		errorList = multierror.Append(errors.Wrapf(err, "creating output directory: %s", output))
 	}
 
 	// Process global configuration files.
@@ -221,9 +223,9 @@ func create(cmd *cobra.Command, args []string) error {
 
 		jobConfig := prowapi.JobConfig{}
 
-		jobs.SortPeriodic(prow.Ascending)
-		jobs.SortPresubmit(prow.Ascending)
-		jobs.SortPostsubmit(prow.Ascending)
+		jobs.SortPeriodic(prow.SortOrder(sort))
+		jobs.SortPresubmit(prow.SortOrder(sort))
+		jobs.SortPostsubmit(prow.SortOrder(sort))
 
 		if err = jobConfig.SetPresubmits(jobs.Presubmits); err != nil {
 			errorList = multierror.Append(errors.Wrapf(err, "settings presubmits: %s", path))
