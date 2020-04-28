@@ -33,10 +33,11 @@ import (
 
 type Empty *struct{}
 
+type Defaults Job
+
 type JobConfiguration struct {
-	GlobalDefaults Job   `json:"global_defaults,omitempty"`
-	LocalDefaults  Job   `json:"defaults,omitempty"`
-	Jobs           []Job `json:"jobs,omitempty"`
+	Defaults
+	Jobs []Job `json:"jobs,omitempty"`
 }
 
 type JobCore struct {
@@ -72,8 +73,8 @@ type JobProw struct {
 }
 
 type JobPeriodic struct {
-	Cron     string         `json:"cron,omitempty"`
-	Interval string         `json:"interval,omitempty"`
+	Cron     string `json:"cron,omitempty"`
+	Interval string `json:"interval,omitempty"`
 	//Interval *time.Duration `json:"interval,omitempty"`
 }
 

@@ -1,3 +1,2 @@
-global_defaults:
-  aliases: {istio: istio.io}
-  clusterName: default
+aliases: {istio: istio.io}
+clusterName: default

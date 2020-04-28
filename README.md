@@ -17,23 +17,21 @@ Create ProwJob yaml configuration.
 Global configuration files containing *default* values inherited by all jobs.
 
 ```yaml
-global_defaults:
+# All valid `metav1.ObjectMeta`, `corev1.Container`, and `corev1.PodSpec` fields are accepted.
+labels: {app.kubernetes.io/part-of: prow}
+namespace: test-pods
+resources: {requests: {cpu: 1}, limits: {cpu: 3}}
+aliases: {istio: istio.io}
+clusterName: default
 
-  # All valid `metav1.ObjectMeta`, `corev1.Container`, and `corev1.PodSpec` fields are accepted.
-  labels: {app.kubernetes.io/part-of: prow}
-  namespace: test-pods
-  resources: {requests: {cpu: 1}, limits: {cpu: 3}}
-  aliases: {istio: istio.io}
-  clusterName: default
-
-  # Requirements are a `map[string]Job` that a job can `require` as part of its definition. 
-  requirements:
-    gcp:
-      labels:
-        preset-service-account: "true"
-    root:
-      securityContext:
-        privileged: true
+# Requirements are a `map[string]Job` that a job can `require` as part of its definition. 
+requirements:
+gcp:
+  labels:
+    preset-service-account: "true"
+root:
+  securityContext:
+    privileged: true
 ```
 
 #### `-i, --input <file1,file2,...>`
@@ -41,11 +39,11 @@ global_defaults:
 Job configuration files with *optional* file-level *defaults*.
 
 ```yaml
-defaults:
-  repo: istio/istio
-  nodeSelector: {testing: test-pool}
-  clone_tmpl: "https://github.com/{{.Org}}/{{.Repo}}.git"
-  output_tmpl: "{{.Org}}/{{.Repo}}/{{.Org}}.{{.Repo}}.gen"
+# Local defaults inherited by all the below jobs.
+repo: istio/istio
+nodeSelector: {testing: test-pool}
+clone_tmpl: "https://github.com/{{.Org}}/{{.Repo}}.git"
+output_tmpl: "{{.Org}}/{{.Repo}}/{{.Org}}.{{.Repo}}.gen"
 
 jobs:
 - name: job_1

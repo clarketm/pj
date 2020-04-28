@@ -1,51 +1,50 @@
-global_defaults:
-  requirements:
-    gcp:
-      labels:
-        preset-service-account: "true"
-    deploy:
-      labels:
-        preset-prow-deployer-service-account: "true"
-    release:
-      labels:
-        preset-release-pipeline: "true"
-    root:
-      securityContext:
-        privileged: true
-    kind:
-      volumeMounts:
-      - mountPath: /lib/modules
-        name: modules
-        readOnly: true
-      - mountPath: /sys/fs/cgroup
-        name: cgroup
-        readOnly: true
-      - mountPath: /var/lib/docker
-        name: docker-root
-      volumes:
-      - name: modules
-        hostPath:
-          path: /lib/modules
-          type: Directory
-      - name: cgroup
-        hostPath:
-          path: /sys/fs/cgroup
-          type: Directory
-      - name: docker-root
-        emptyDir: {}
-    docker:
-      volumeMounts:
-      - mountPath: /var/lib/docker
-        name: docker-root
-      volumes:
-      - name: docker-root
-        emptyDir: {}
-    github:
-      volumeMounts:
-      - name: github
-        mountPath: /etc/github-token
-        readOnly: true
-      volumes:
-      - name: github
-        secret:
-          secretName: oauth-token
+requirements:
+  gcp:
+    labels:
+      preset-service-account: "true"
+  deploy:
+    labels:
+      preset-prow-deployer-service-account: "true"
+  release:
+    labels:
+      preset-release-pipeline: "true"
+  root:
+    securityContext:
+      privileged: true
+  kind:
+    volumeMounts:
+    - mountPath: /lib/modules
+      name: modules
+      readOnly: true
+    - mountPath: /sys/fs/cgroup
+      name: cgroup
+      readOnly: true
+    - mountPath: /var/lib/docker
+      name: docker-root
+    volumes:
+    - name: modules
+      hostPath:
+        path: /lib/modules
+        type: Directory
+    - name: cgroup
+      hostPath:
+        path: /sys/fs/cgroup
+        type: Directory
+    - name: docker-root
+      emptyDir: {}
+  docker:
+    volumeMounts:
+    - mountPath: /var/lib/docker
+      name: docker-root
+    volumes:
+    - name: docker-root
+      emptyDir: {}
+  github:
+    volumeMounts:
+    - name: github
+      mountPath: /etc/github-token
+      readOnly: true
+    volumes:
+    - name: github
+      secret:
+        secretName: oauth-token

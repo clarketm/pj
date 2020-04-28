@@ -1,7 +1,6 @@
-defaults:
-  repo: istio/istio
-  nodeSelector: {testing: test-pool}
-  clone_tmpl: "https://github.com/{{.Org}}/{{.Repo}}.git"
+repo: istio/istio
+nodeSelector: {testing: test-pool}
+clone_tmpl: "https://github.com/{{.Org}}/{{.Repo}}.git"
 
 jobs:
 - name: job_1
