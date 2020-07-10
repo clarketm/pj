@@ -12,6 +12,10 @@ gobin github.com/clarketm/pj
 
 ## Usage
 
+```shell
+pj --help
+```
+
 ```console
 ProwJob job manager
 
