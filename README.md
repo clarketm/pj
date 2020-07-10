@@ -4,15 +4,41 @@ pj is a command line tool for managing ProwJobs (PJs).
 
 ## Installing
 
-## Getting Started
+Install using [gobin](https://github.com/myitcv/gobin):
 
-## Subcommands
+```shell
+gobin github.com/clarketm/pj
+```
 
-### `create`
+## Usage
+
+```console
+ProwJob job manager
+
+Usage:
+  pj [flags]
+  pj [command]
+
+Available Commands:
+  create      Create ProwJob yaml configuration
+  help        Help about any command
+
+Flags:
+      --config string   Config file (default is $HOME/.pj.yaml).
+  -h, --help            help for pj
+  -v, --verbose         Enable verbose output.
+      --version         Version number.
+
+Use "pj [command] --help" for more information about a command.
+```
+
+### Commands
+
+#### `create`
 
 Create ProwJob yaml configuration.
 
-#### `-g, --global <file1,file2,...>`
+##### `-g, --global <file1,file2,...>`
 
 Global configuration files containing *default* values inherited by all jobs.
 
@@ -34,7 +60,7 @@ root:
     privileged: true
 ```
 
-#### `-i, --input <file1,file2,...>`
+##### `-i, --input <file1,file2,...>`
 
 Job configuration files with *optional* file-level *defaults*.
 
@@ -56,6 +82,6 @@ jobs:
   extra_repos: [istio/test-infra@master]
 ```
 
-#### `-o, --ouput <directory>`
+##### `-o, --ouput <directory>`
 
 Output directory to write jobs to. Subdirectory structure is determined by the `output_tmpl` field. 
