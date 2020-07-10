@@ -35,11 +35,11 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"github.com/clarketm/pj/api"
+	"github.com/clarketm/pj/pkg/cli"
 	"github.com/clarketm/pj/pkg/maps"
 )
 
-func ResolveTemplate(tmplStr string, job *api.Job) string {
+func ResolveTemplate(tmplStr string, job *cli.Job) string {
 	if tmplStr == "" {
 		return tmplStr
 	}
@@ -67,7 +67,7 @@ func ResolveTemplate(tmplStr string, job *api.Job) string {
 	return b.String()
 }
 
-func SetDefaults(job *api.Job) {
+func SetDefaults(job *cli.Job) {
 	if job.Branch != "" {
 		job.Branches = append(job.Branches, job.Branch)
 	}
@@ -81,17 +81,17 @@ func SetDefaults(job *api.Job) {
 	}
 
 	if len(job.Types) == 0 {
-		job.Types = []api.JobType{api.Presubmit}
+		job.Types = []cli.JobType{cli.Presubmit}
 	}
 }
 
-func CreatePresubmit(job *api.Job) prowapi.Presubmit {
+func CreatePresubmit(job *cli.Job) prowapi.Presubmit {
 	mods := jobModifiers(job.Modifiers)
 
 	return prowapi.Presubmit{
 		JobBase:      createJobBase(job, mods),
-		AlwaysRun:    !mods.Has(string(api.Skipped)),
-		Optional:     mods.Has(string(api.Optional)),
+		AlwaysRun:    !mods.Has(string(cli.Skipped)),
+		Optional:     mods.Has(string(cli.Optional)),
 		Trigger:      job.Trigger,
 		RerunCommand: job.RerunCommand,
 		Brancher: prowapi.Brancher{
@@ -102,12 +102,12 @@ func CreatePresubmit(job *api.Job) prowapi.Presubmit {
 			RunIfChanged: job.Regex,
 		},
 		Reporter: prowapi.Reporter{
-			SkipReport: mods.Has(string(api.Hidden)),
+			SkipReport: mods.Has(string(cli.Hidden)),
 		},
 	}
 }
 
-func CreatePostsubmit(job *api.Job) prowapi.Postsubmit {
+func CreatePostsubmit(job *cli.Job) prowapi.Postsubmit {
 	mods := jobModifiers(job.Modifiers)
 
 	return prowapi.Postsubmit{
@@ -120,12 +120,12 @@ func CreatePostsubmit(job *api.Job) prowapi.Postsubmit {
 			RunIfChanged: job.Regex,
 		},
 		Reporter: prowapi.Reporter{
-			SkipReport: mods.Has(string(api.Hidden)),
+			SkipReport: mods.Has(string(cli.Hidden)),
 		},
 	}
 }
 
-func CreatePeriodic(job *api.Job) prowapi.Periodic {
+func CreatePeriodic(job *cli.Job) prowapi.Periodic {
 	mods := jobModifiers(job.Modifiers)
 
 	return prowapi.Periodic{
@@ -135,7 +135,7 @@ func CreatePeriodic(job *api.Job) prowapi.Periodic {
 	}
 }
 
-func createJobBase(job *api.Job, mods sets.String) prowapi.JobBase {
+func createJobBase(job *cli.Job, mods sets.String) prowapi.JobBase {
 	return prowapi.JobBase{
 		Name:           job.Name,
 		Labels:         job.Labels,
@@ -157,7 +157,7 @@ func createJobBase(job *api.Job, mods sets.String) prowapi.JobBase {
 			NodeSelector: job.NodeSelector,
 		},
 		Annotations:     job.Annotations,
-		Hidden:          mods.Has(string(api.Private)),
+		Hidden:          mods.Has(string(cli.Private)),
 		ReporterConfig:  job.ReporterConfig,
 		RerunAuthConfig: job.RerunAuthConfig,
 		UtilityConfig: prowapi.UtilityConfig{
@@ -197,7 +197,7 @@ func createExtraRefs(refs []string) []prowv1.Refs {
 	return extraRefs
 }
 
-func jobModifiers(modifiers []api.Modifier) sets.String {
+func jobModifiers(modifiers []cli.Modifier) sets.String {
 	mods := sets.String{}
 	for _, mod := range modifiers {
 		mods.Insert(string(mod))

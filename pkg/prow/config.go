@@ -27,7 +27,7 @@ import (
 
 	prowapi "k8s.io/test-infra/prow/config"
 
-	"github.com/clarketm/pj/api"
+	"github.com/clarketm/pj/pkg/cli"
 )
 
 type SortOrder string
@@ -54,15 +54,15 @@ func (o *ProwJobConfig) Empty() bool {
 	return len(o.Presubmits) == 0 && len(o.Postsubmits) == 0 && len(o.Periodics) == 0
 }
 
-func (o *ProwJobConfig) AddPresubmit(orgrepo string, job *api.Job) {
+func (o *ProwJobConfig) AddPresubmit(orgrepo string, job *cli.Job) {
 	o.Presubmits[orgrepo] = append(o.Presubmits[orgrepo], CreatePresubmit(job))
 }
 
-func (o *ProwJobConfig) AddPostsubmit(orgrepo string, job *api.Job) {
+func (o *ProwJobConfig) AddPostsubmit(orgrepo string, job *cli.Job) {
 	o.Postsubmits[orgrepo] = append(o.Postsubmits[orgrepo], CreatePostsubmit(job))
 }
 
-func (o *ProwJobConfig) AddPeriodic(job *api.Job) {
+func (o *ProwJobConfig) AddPeriodic(job *cli.Job) {
 	o.Periodics = append(o.Periodics, CreatePeriodic(job))
 }
 

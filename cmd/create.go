@@ -35,7 +35,7 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 
-	"github.com/clarketm/pj/api"
+	"github.com/clarketm/pj/pkg/cli"
 	osutil "github.com/clarketm/pj/pkg/os"
 	"github.com/clarketm/pj/pkg/prow"
 )
@@ -71,7 +71,7 @@ func init() {
 }
 
 func create(cmd *cobra.Command, args []string) error {
-	var globalConfig api.Job
+	var globalConfig cli.Job
 	var prowjobs = make(map[string]*prow.ProwJobConfig)
 	var errorList error
 
@@ -119,13 +119,13 @@ func create(cmd *cobra.Command, args []string) error {
 			continue
 		}
 
-		var gc api.JobConfiguration
+		var gc cli.JobConfiguration
 		if err := yaml.Unmarshal(f, &gc); err != nil {
 			errorList = multierror.Append(errors.Wrapf(err, "unmarshal global config: %s", global[i]))
 			continue
 		}
 
-		if err := mergo.Merge(&globalConfig, api.Job(gc.Defaults)); err != nil {
+		if err := mergo.Merge(&globalConfig, cli.Job(gc.Defaults)); err != nil {
 			errorList = multierror.Append(errors.Wrapf(err, "merge global config: %s", global[i]))
 			continue
 		}
@@ -156,7 +156,7 @@ func create(cmd *cobra.Command, args []string) error {
 				return nil
 			}
 
-			var jc api.JobConfiguration
+			var jc cli.JobConfiguration
 			if err := yaml.Unmarshal(f, &jc); err != nil {
 				errorList = multierror.Append(errors.Wrapf(err, "unmarshal input config: %s", inPath))
 				return nil
@@ -165,7 +165,7 @@ func create(cmd *cobra.Command, args []string) error {
 			for i := range jc.Jobs {
 				job := &jc.Jobs[i]
 
-				for _, m := range []interface{}{api.Job(jc.Defaults), globalConfig} {
+				for _, m := range []interface{}{cli.Job(jc.Defaults), globalConfig} {
 					if err := mergo.Merge(job, m); err != nil {
 						errorList = multierror.Append(errors.Wrapf(err, "merge input config: %s", inPath))
 						return nil
@@ -201,11 +201,11 @@ func create(cmd *cobra.Command, args []string) error {
 
 				for _, jobType := range job.Types {
 					switch jobType {
-					case api.Postsubmit:
+					case cli.Postsubmit:
 						prowjobs[outPath].AddPostsubmit(job.OrgRepo, job)
-					case api.Periodic:
+					case cli.Periodic:
 						prowjobs[outPath].AddPeriodic(job)
-					case api.Presubmit:
+					case cli.Presubmit:
 						prowjobs[outPath].AddPresubmit(job.OrgRepo, job)
 					}
 				}

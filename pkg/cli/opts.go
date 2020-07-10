@@ -20,7 +20,7 @@
  THE SOFTWARE.
 */
 
-package api
+package cli
 
 import (
 	"strings"
